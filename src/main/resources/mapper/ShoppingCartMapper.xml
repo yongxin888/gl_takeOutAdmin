@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glwm.mapper.ShoppingCartMapper">
+    <insert id="addShoppingCart" parameterType="com.glwm.entity.ShoppingCart">
+        insert into shopping_cart(amount,user_id,dish_flavor,dish_id,setmeal_id,image,name,number,create_time,merchant_id) values (#{amount},#{userId},#{dishFlavor},#{dishId},#{setmealId},#{image},#{name},#{number},now(), #{merchantId})
+    </insert>
+
+    <select id="selectCount" resultType="com.glwm.entity.ShoppingCart">
+        select * from shopping_cart where  user_id = #{userId}<if test="dishId != null and dishId != ''">and dish_id = #{dishId}</if><if test="setmealId != null and setmealId != ''">and setmeal_id = #{setmealId}</if><if test="merchantId != null and merchantId != ''">and merchant_id = #{merchantId}</if>
+    </select>
+
+    <update id="updateDishNumber">
+        update shopping_cart set number = #{number} where user_id = #{userId}<if test="dishId != null and dishId != ''">and dish_id = #{dishId}</if><if test="setmealId != null and setmealId != ''">and setmeal_id = #{setmealId}</if>
+    </update>
+
+    <select id="selectShoppingCart" resultType="com.glwm.entity.ShoppingCart">
+        select * from shopping_cart
+    </select>
+
+    <delete id="deleteShoppingCartNumber">
+        delete from shopping_cart where user_id = #{userId}<if test="dishId != null and dishId != ''">and dish_id = #{dishId}</if><if test="setmealId != null and setmealId != ''">and setmeal_id = #{setmealId}</if>
+    </delete>
+
+    <select id="selectUserIDShoppingCart" resultType="com.glwm.entity.ShoppingCart">
+        select * from shopping_cart where user_id = #{id} and merchant_id = #{merchantId}
+    </select>
+</mapper>

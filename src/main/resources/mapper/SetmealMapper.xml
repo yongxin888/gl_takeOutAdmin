@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glwm.mapper.SetmealMapper">
+    <select id="pageSetmeal" resultType="com.glwm.dto.SetmealAndCategory">
+        select s.*, c.name categoryName from setmeal s left join category c on s.category_id = c.id where s.merchant_id = #{merchantId} <if test="name != null and name!=''">and s.`name` like concat("%",#{name},"%")</if> limit #{page},#{pageSize}
+    </select>
+
+    <select id="selectTotal" resultType="long">
+        select count(*) from setmeal s left join category c on s.category_id = c.id where s.merchant_id = #{merchantId} <if test="name != null and name!=''">and s.`name` like concat("%",#{name},"%")</if>
+    </select>
+
+    <insert id="insertSetmeal" parameterType="com.glwm.dto.SetmealAndCategory" useGeneratedKeys="true" keyProperty="id">
+        insert into setmeal(category_id, merchant_id, name, price, status, description, image, create_time, update_time) values (#{categoryId}, #{merchantId}, #{name}, #{price}, #{status}, #{description}, #{image}, now(), now())
+    </insert>
+
+    <insert id="insertSetmealDish" parameterType="com.glwm.entity.SetmealDish">
+        insert into setmeal_dish(setmeal_id, dish_id, copies, sort, create_time, update_time) values
+        <foreach collection="setmealDishList" separator="," item="item">
+            (#{setmealId}, #{item.dishId}, #{item.copies}, 1, now(),now())
+        </foreach>
+    </insert>
+
+    <update id="updateSetmealStatus" parameterType="long">
+        update setmeal set status = #{status} where id in (
+        <foreach collection="ids" item="id" separator="," >
+            #{id}
+        </foreach>
+        )
+    </update>
+
+    <resultMap id="setmealDish" type="com.glwm.dto.SetmealAndCategory">
+        <id column="id" property="id"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="merchant_id" property="merchantId"/>
+        <result column="name" property="name"/>
+        <result column="price" property="price"/>
+        <result column="status" property="status"/>
+        <result column="description" property="description"/>
+        <result column="image" property="image"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <collection property="setmealDishes" ofType="com.glwm.entity.SetmealDish">
+            <result column="copies" property="copies"/>
+            <result column="setmeal_id" property="setmealId"/>
+            <result column="dish_id" property="dishId"/>
+            <result column="dishName" property="name"/>
+            <result column="dishPrice" property="price"/>
+        </collection>
+    </resultMap>
+    <select id="selectSetmeal" resultMap="setmealDish">
+        select s.*, c.name categoryName, ds.name dishName, ds.price dishPrice, ds.`status` dishStatus, sd.copies,sd.setmeal_id,sd.dish_id from setmeal s left join category c on s.category_id = c.id right join setmeal_dish sd on sd.setmeal_id = s.id left join dish ds on sd.dish_id = ds.id where s.id = #{id}
+    </select>
+
+    <update id="updateSetmeal" parameterType="com.glwm.dto.SetmealAndCategory" useGeneratedKeys="true" keyProperty="id">
+        update setmeal set category_id = #{categoryId}, name = #{name}, price = #{price}, description = #{description}, image = #{image}, update_time = now() where id = #{id}
+    </update>
+
+    <delete id="deleteSetmealDish">
+        delete from setmeal_dish where setmeal_id = #{id}
+    </delete>
+
+    <delete id="deleteSetmeal">
+        delete from setmeal where id in (
+        <foreach collection="ids" item="id" separator="," >
+            #{id}
+        </foreach>
+        )
+    </delete>
+
+    <select id="selectClientSetmeal" resultType="com.glwm.entity.Setmeal">
+        select * from setmeal where category_id = #{categoryId} and status = #{status}
+    </select>
+
+    <resultMap id="ClientSetmealDish" type="com.glwm.dto.SetmealAndCategory">
+        <id column="id" property="id"/>
+       <result column="description" property="description"/>
+       <result column="image" property="image"/>
+        <result column="name" property="name"/>
+        <result column="price" property="price"/>
+        <result column="copies" property="copies"/>
+    </resultMap>
+    <select id="selectClientSetmealDish" resultMap="ClientSetmealDish">
+        SELECT dish.*,setmeal_dish.copies FROM `setmeal_dish` left join dish on setmeal_dish.dish_id = dish.id WHERE setmeal_dish.setmeal_id = #{id}
+    </select>
+</mapper>

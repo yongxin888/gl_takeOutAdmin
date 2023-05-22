@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glwm.mapper.UserMapper">
+    <!--根据用户名和密码查询-->
+    <select id="Login" resultType="com.glwm.entity.User">
+        select * from user where username = #{username} and password = #{password}
+    </select>
+
+    <!--
+        手动映射:通过resultMap标签配置映射规则
+            1. id属性:表示这个手动映射规则的唯一表示
+            2. type属性: 表示这个手动映射规则是将结果集映射给哪个类的对象，就是JavaBean类的全限定名
+        resultMap标签中的子标签就是一一指定映射规则:
+            1. id标签:指定主键的映射规则
+            2. result标签:指定非主键的映射规则
+        id标签和result标签的属性:
+            1. column:要进行映射的结果集的字段名
+            2. property:要进行映射的JavaBean的属性名
+    -->
+    <resultMap id="MerchantsUser" type="com.glwm.dto.MerchantsAndUserPage">
+        <collection property="merchants" ofType="com.glwm.entity.Merchants">
+            <id column="id" property="id"></id>
+            <result column="name" property="name" />
+            <result column="phone" property="phone" />
+            <result column="shop_sort" property="shopSort" />
+            <result column="status" property="status" />
+        </collection>
+        <collection property="user" ofType="com.glwm.entity.User">
+            <result column="username" property="username"/>
+        </collection>
+    </resultMap>
+    <select id="pageMerchants" resultMap="MerchantsUser">
+        select m.id,m.`name`,m.phone,m.shop_sort,m.`status`,u.username from merchants m left join user u on m.user_id = u.id<where><if test="name != null and name!=''">m.`name` like concat("%",#{name}, "%")</if></where> order by u.id limit #{page},#{pageSize}
+    </select>
+
+    <select id="pageTotal" resultType="int">
+        select count(*) from merchants m left join user u on m.user_id = u.id<where><if test="name != null and name!=''">m.`name` like concat("%",#{name}, "%")</if></where>
+    </select>
+
+    <insert id="insertUser" parameterType="com.glwm.entity.User" useGeneratedKeys="true" keyProperty="id">
+        <selectKey keyProperty="id" resultType="long">select LAST_INSERT_ID();</selectKey>
+        insert into user(username,password,role) values (#{username},#{password},#{role})
+    </insert>
+
+    <insert id="insertMerchants" parameterType="com.glwm.dto.MerchantsAndUser">
+        insert into merchants(name,phone,shop_address,shop_sort,shop_photo,user_id,status,create_time,update_time) values (#{name},#{phone},#{shopAddress},#{shopSort},#{shopPhoto},#{userId},#{status},#{createTime},#{updateTime})
+    </insert>
+
+    <select id="selectMerchantsAndUser" resultType="com.glwm.dto.MerchantsAndUser">
+        SELECT m.*,u.username from merchants m left join user u on m.user_id = u.id WHERE m.id = #{id}
+    </select>
+
+    <update id="updateStatus" parameterType="com.glwm.entity.Merchants">
+        update merchants set status = #{status} where id = #{id}
+    </update>
+
+    <select id="loginUser" resultType="com.glwm.entity.User">
+        select * from user where phone = #{phone} and password = #{password}
+    </select>
+
+    <select id="loginOrder" resultType="com.glwm.dto.OrderAndAddress">
+        select `order`.*,merchants.`name`,merchants.shop_address, `user`.nickname,`user`.head_photo from `order` LEFT JOIN merchants on `order`.merchant_id = merchants.id LEFT JOIN `user` on `order`.user_id = `user`.id where `order`.user_id = #{userId} ORDER BY `order`.order_time DESC
+    </select>
+
+    <select id="loginAddress" resultType="com.glwm.entity.Address">
+        select * from address where user_id = #{userId}
+    </select>
+
+    <insert id="addAddress" parameterType="com.glwm.entity.Address">
+        insert into address(user_id,consignee,phone,site,create_time,update_time,is_default,label) values (#{userId},#{consignee},#{phone},#{site},now(),now(),#{isDefault},#{label})
+    </insert>
+</mapper>

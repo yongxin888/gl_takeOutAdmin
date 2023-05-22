@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glwm.mapper.OrderMapper">
+    <resultMap id="pageOrder" type="com.glwm.dto.OrderAndAddress">
+        <result column="number" property="number"/>
+        <result column="status" property="status"/>
+        <result column="user_id" property="userId"/>
+        <result column="address_id" property="addressId"/>
+        <result column="order_time" property="orderTime"/>
+        <result column="checkout_time" property="checkoutTime"/>
+        <result column="pay_method" property="payMethod"/>
+        <result column="amount" property="amount"/>
+        <result column="merchant_id" property="merchantId"/>
+        <result column="phone" property="phone"/>
+        <result column="remark" property="remark"/>
+        <result column="username" property="username"/>
+        <collection property="address" ofType="com.glwm.entity.Address">
+            <result column="mit" property="mit"/>
+            <result column="city" property="city"/>
+            <result column="county" property="county"/>
+            <result column="town" property="town"/>
+            <result column="site" property="site"/>
+            <result column="consignee" property="consignee"/>
+        </collection>
+    </resultMap>
+    <select id="selectPageOrder" resultMap="pageOrder">
+        select o.*, a.mit,a.site,a.city,a.county,a.town,a.consignee,u.username from `order` o left join address a on o.address_id = a.id left join `user` u on a.user_id = u.id where o.merchant_id = #{merchantId} <if test="number != null and number!=''">and o.`number` like concat("%",#{number},"%")</if> <if test="beginTime != null and endTime!= null">and o.`order_time` between #{beginTime} and #{endTime}</if>  limit #{page},#{pageSize}
+    </select>
+
+    <select id="selectTotal" resultType="long">
+        select count(*) from `order` o left join address a on o.address_id = a.id left join `user` u on a.user_id = u.id where o.merchant_id = #{merchantId} <if test="number != null and number!=''">and o.`number` like concat("%",#{number},"%")</if> <if test="beginTime != null and endTime!= null">and o.`order_time` between #{beginTime} and #{endTime}</if>
+    </select>
+
+    <insert id="insertOrder" parameterType="com.glwm.entity.Order">
+        insert into `order`(number, `status`, user_id, address_id, order_time, checkout_time, pay_method, amount, merchant_id, phone, remark) values (#{number},#{status},#{userId},#{addressId},now(),now(),#{payMethod},#{amount},#{merchantId},#{phone},#{remark})
+    </insert>
+
+    <insert id="insertOrderDetail" parameterType="com.glwm.entity.OrderDetail">
+        insert into order_detail(number,dish_id,dish_flavor,setmeal_id,money,amount)
+        values
+        <foreach collection="orderDetail" separator="," item="item">
+            (#{item.number},#{item.dishId},#{item.dishFlavor},#{item.setmealId},#{item.money},#{item.amount})
+        </foreach>
+    </insert>
+
+    <resultMap id="userOrderMerchant" type="com.glwm.dto.DishAndOrder">
+        <id column="id" property="id"/>
+        <result column="status" property="status"/>
+        <result column="user_id" property="userId"/>
+        <result column="address_id" property="addressId"/>
+        <result column="order_time" property="orderTime"/>
+        <result column="checkout_time" property="checkoutTime"/>
+        <result column="pay_method" property="payMethod"/>
+        <result column="amount" property="amount"/>
+        <result column="merchant_id" property="merchantId"/>
+        <result column="phone" property="phone"/>
+        <result column="remark" property="remark"/>
+        <result column="name" property="name"/>
+        <result column="image" property="image"/>
+        <collection property="orderDetailList" ofType="com.glwm.entity.OrderDetail">
+            <result column="money" property="money"/>
+            <result column="dish_flavor" property="dishFlavor"/>
+            <result column="orderNumber" property="number"/>
+            <result column="name" property="dishName"/>
+            <result column="dishAmount" property="amount"/>
+        </collection>
+    </resultMap>
+    <select id="selectUserOrderMerchant" resultMap="userOrderMerchant">
+        SELECT `order`.*,order_detail.money,order_detail.dish_flavor,order_detail.amount dishAmount,order_detail.number orderNumber,dish.`name`,dish.image  FROM `order` LEFT JOIN order_detail on `order`.number = order_detail.number LEFT JOIN dish on order_detail.dish_id = dish.id where `order`.merchant_id = #{merchantId} and `order`.user_id = #{userId} ORDER BY order_time DESC LIMIT #{page},#{pageSize}
+    </select>
+</mapper>

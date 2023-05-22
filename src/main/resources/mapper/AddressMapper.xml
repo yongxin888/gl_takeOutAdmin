@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glwm.mapper.AddressMapper">
+    <select id="selectAddressAndUser" resultType="com.glwm.dto.AddressAndUser">
+        SELECT address.*, `user`.sex FROM address LEFT JOIN `user` on address.user_id = `user`.id where address.is_default = 1 and address.user_id = #{userId}
+    </select>
+
+    <select id="selectAddressList" resultType="com.glwm.dto.AddressAndUser">
+        SELECT address.*, `user`.sex FROM address LEFT JOIN `user` on address.user_id = `user`.id where address.user_id = #{id}
+    </select>
+
+    <update id="updateAddressDefault" parameterType="long">
+        update address set is_default = #{isDefault} where <if test="id != null and id != ''">id = #{id}</if><if test="userId != null and userId != ''">user_id = #{userId}</if>
+    </update>
+</mapper>
